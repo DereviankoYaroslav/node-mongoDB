@@ -8,8 +8,24 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+/*
+When an Admin sends a GET request to http://localhost:3000/users you will return the details of all the users. 
+Ordinary users are forbidden from performing this operation.
+*/
+router.get('/', authenticate.verifyUser, function(req, res, next) {
+  var err = authenticate.verifyAdmin(req.user.admin);
+    if (err){
+        next(err);
+    } 
+    else {
+      User.find({})
+        .then((user) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(user);
+        }, (err) => next(err))
+        .catch((err) => next(err));
+    }
 });
 
 router.post('/signup', function(req, res, next){
@@ -49,10 +65,9 @@ router.post('/login', passport.authenticate('local'), (req, res, next) => {
   res.json({success: true, token: token, status: 'Login Successful!'});
 });
 
-router.get('/logout', (req, res) => {
-  if (req.session){
-    req.session.destroy();
-    res.clearCookie('session-id');
+router.get('/logout', (req, res, next) => {
+  if (req.headers.authorization != null){
+    res.clearCookie("jwt");
     res.redirect('/');
   }
   else {
