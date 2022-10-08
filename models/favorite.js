@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 require('mongoose-currency').loadType(mongoose);
 
+//New Favorite Schema
+
 const favoriteSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,

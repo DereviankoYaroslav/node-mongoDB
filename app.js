@@ -58,6 +58,8 @@ app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
 app.use('/imageUpload',uploadRouter);
+
+//new favorites Route
 app.use('/favorites', favoriteRouter);
 
 app.use(function(req, res, next) {

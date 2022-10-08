@@ -10,8 +10,11 @@ const favoriteRouter = express.Router();
 
 favoriteRouter.use(bodyParser.json());
 
+//Express router() for the '/favorites' 
+
 favoriteRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => {res.sendStatus(200);})
+//GET operation on '/favorites' with population
 .get(cors.cors, (req, res, next) => {
     Favorites.find({})
     .populate('user')
@@ -23,6 +26,7 @@ favoriteRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
+//POST operation to add dishes to Favorites.dishes
 .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     var myDishes = [];
     var counter;
@@ -63,6 +67,7 @@ favoriteRouter.route('/')
         })
         .catch((err) => next(err));
 })
+//DELETE operation to delete favorite of corresponding user
 .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Favorites.deleteOne({user: req.user._id})
     .then((resp) => {
@@ -84,9 +89,10 @@ favoriteRouter.route('/')
 
 favoriteRouter.route('/:dishId')
 .options(cors.corsWithOptions, (req, res) => {res.sendStatus(200);})
+//GET operation to get info about the dish from request if it is in user's favorites
 .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
     console.log(req.user);
-    var seachedDish;
+    var seachedDish = 404;
     Favorites.findOne({user: req.user._id})
     .populate('user')
     .populate('dishes')
@@ -103,6 +109,7 @@ favoriteRouter.route('/:dishId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
+//POST operation to add dish from req.params.dishId to Favorites.dishes if not already in list
 .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Favorites.findOne({user: req.user._id})
         .then((user) => {
@@ -129,6 +136,33 @@ favoriteRouter.route('/:dishId')
         })
         .catch((err) => next(err));
 })
+//DELETE operation to delete dish from Favorites.dishes according to the req.params.dishId if it is in list
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    Favorites.findOne({user: req.user._id})
+        .then((user) => {
+            if (user !== null){
+                if(user.dishes.includes(req.params.dishId)){
+                    user.dishes.pop(req.params.dishId);
+                    console.log(user.dishes);
+                    user.save();
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(user);
+                }
+                else {
+                    var err = new Error ('Not in list');
+                    err.status = 404;
+                    next(err);
+                }
+            }
+            else {
+                var err = new Error ('Nothing to delete for you')
+                err.status = 404;
+                next(err);
+            }
+        })
+        .catch((err) => next(err));
+});
 
 
 module.exports = favoriteRouter;
